@@ -1,0 +1,23 @@
+{
+  "name": "linkmeup",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "scripts": {
+    "dev": "nodemon src/run.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "generate": "ts-node src/analize.ts"
+  },
+  "files": [
+    "dist"
+  ]
+}
