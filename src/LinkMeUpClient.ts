@@ -46,7 +46,8 @@ export const getClient = <K extends Clients, TYPE extends keyof K>(moduleName: T
             if (args["_linkmeup_status"] === "progress") {
               const id = args["_linkmeup_id"]
               setTimeout(() => {
-                https.get(`${url}/_linkmeup_status/${id}`, {}, onResponse)
+                const newRequest = https.get(`${url}/_linkmeup_status/${id}`, {}, onResponse)
+                newRequest.on("error", rej)
               }, delay)
               return
             }
@@ -61,6 +62,8 @@ export const getClient = <K extends Clients, TYPE extends keyof K>(moduleName: T
         }
 
         const clientRequest = https.request(`${url}/${name}`, { method: "POST", headers }, onResponse)
+        clientRequest.on("error", rej)
+
         clientRequest.write(body)
         clientRequest.end()
       })

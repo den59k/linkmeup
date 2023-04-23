@@ -97,7 +97,7 @@ server.addLongMethod("processVideo", async (video: Buffer, callback: (progress: 
 })
 ```
 
-And that's it! Also generate the d.ts files and move quickly to the root.
+And that's it! Also generate the `d.ts` files and move quickly to the root.
 
 ```ts
 
