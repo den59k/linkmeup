@@ -17,11 +17,11 @@ export class LinkMeUpServer {
     
   }
   
-  addMethod(channel: string, event: (...args: any) => any | Promise<any>, options: AddMethodOptions = {}) {
+  addMethod(channel: string, event: (...args: any) => Promise<any>, options: AddMethodOptions = {}) {
     this.events.set(channel, { event, options, type: "simple" })
   }
 
-  addLongMethod(channel: string, event: (...args: any) => any | Promise<any>, options: AddMethodOptions = {}) {
+  addLongMethod(channel: string, event: (...args: any) => Promise<any>, options: AddMethodOptions = {}) {
     this.events.set(channel, { event, options, type: "long" })
   }
 

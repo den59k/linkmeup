@@ -4,6 +4,17 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
+  "description": "The easiest connection between microservices in NodeJS",
+  "author": {
+    "name": "den59k",
+    "email": "easix@ya.ru"
+  },
+  "repository": {
+    "url": "https://github.com/den59k/linkmeup"
+  },
+  "engines": {
+    "node": ">=10"
+  },
   "devDependencies": {
     "@types/node": "^18.15.11",
     "dotenv": "^16.0.3",
