@@ -10,7 +10,7 @@ export class LinkMeUpError extends Error {
   }
 }
 
-export const createPeer = (url: string) => {
+export const createPeer = (url: string, debug?: boolean) => {
 
   let value = 0
   let status = "init"
@@ -59,14 +59,21 @@ export const createPeer = (url: string) => {
     writeBody(clientRequest, payload, methods)
   })
 
-  const ping = async () => {
+  const setStatus = (newStatus: string) => {
+    if (debug && status !== newStatus) {
+      console.info(`Peer ${url} ${newStatus}`)
+    }
+    status = newStatus
+  }
+
+  const ping = async (debug = false) => {
     const onResponse = async (msg: IncomingMessage) => {
       const body = await parseBody(msg)
-      status = "ready"
+      setStatus("ready")
       value = body.value
     }
     const onReject = () => {
-      status = "not-available"
+      setStatus("not-available")
     }
     const clientRequest = request(`${url}`, { method: "GET" }, onResponse)
     clientRequest.on("error", onReject)
@@ -82,11 +89,15 @@ export const createPeer = (url: string) => {
   }
 }
 
-export const createClient = (url: string | string[]) => {
+type CreateClientOptions = {
+  debug?: boolean
+}
+
+export const createClient = (url: string | string[], options: CreateClientOptions = {}) => {
 
   const urls = Array.isArray(url)? url: [ url ]
 
-  const peers = urls.map(url => createPeer(url))
+  const peers = urls.map(url => createPeer(url, options.debug))
 
   const getActivePeer = async () => {
     let activePeers = peers.filter(item => item.getStatus() === "ready")
@@ -108,7 +119,7 @@ export const createClient = (url: string | string[]) => {
 
   const ping = () => {
     for (let peer of peers) {
-      peer.ping()
+      peer.ping(options.debug)
     }
   }
   ping()

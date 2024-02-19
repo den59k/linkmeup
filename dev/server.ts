@@ -15,7 +15,7 @@ server.addMethod("fileSize", async (image: Buffer) => {
 server.listen(3000, "127.0.0.1")
   .then(() => console.log("Server listen!"))
 
-const client = createClient("http://127.0.0.1:3000")
+const client = createClient("http://127.0.0.1:3000", { debug: true })
 
 const init = async () => {
 
