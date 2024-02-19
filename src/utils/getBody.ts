@@ -77,11 +77,11 @@ export const writeBody = (reply: ClientRequest | ServerResponse, obj: any, metho
   buffers.unshift(Buffer.from(controls.buffer))
   const response = Buffer.concat(buffers)
 
+  reply.setHeader("content-type", "application/octet-stream")
+  reply.setHeader("content-length", response.byteLength)
   if ("writeHead" in reply) {
     reply.writeHead(200)
   }
-  reply.setHeader("content-type", "application/octet-stream")
-  reply.setHeader("content-length", response.byteLength)
   reply.end(response)
 }
 

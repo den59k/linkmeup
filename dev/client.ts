@@ -8,7 +8,7 @@ const init = async () => {
   const resp = await client.sum(5, 2)
   console.log(resp)
 
-  const file = await fs.promises.readFile(__dirname + "/test.webp")
+  const file = await fs.promises.readFile(__dirname + "/test.jpg")
   const resp2 = await client.fileSize(file)
   console.log(resp2)
 }

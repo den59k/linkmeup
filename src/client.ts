@@ -1,5 +1,5 @@
 import { request as httpsRequest } from 'https'
-import { IncomingMessage, request as httpRequest } from 'http'
+import { IncomingMessage, request as httpRequest, get } from 'http'
 import { parseBody, writeBody } from './utils/getBody'
 
 const delay = 200
@@ -72,7 +72,7 @@ export const createPeer = (url: string, debug?: boolean) => {
       setStatus("ready")
       value = body.value
     }
-    const onReject = () => {
+    const onReject = (err: any) => {
       setStatus("not-available")
     }
     const clientRequest = request(`${url}`, { method: "GET" }, onResponse)
