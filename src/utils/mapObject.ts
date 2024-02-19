@@ -9,6 +9,7 @@ export const mapObject = (obj: any, callback: (obj: any) => any) => {
       }
       mapObject(obj[i], callback)
     }
+    return obj
   }
 
   if (typeof obj === "object") {
@@ -21,6 +22,7 @@ export const mapObject = (obj: any, callback: (obj: any) => any) => {
       }
       mapObject(value, callback)
     }
+    return obj
   }
 
   return obj

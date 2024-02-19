@@ -1,6 +1,8 @@
 import { ClientRequest, IncomingMessage, ServerResponse } from "http";
 import { mapObject } from "./mapObject";
 
+const INT_SIZE = 4
+
 export const parseBody = async (req: IncomingMessage, methodsCache?: any[]) => {
 
   const buffers: Buffer[] = [];
@@ -8,23 +10,22 @@ export const parseBody = async (req: IncomingMessage, methodsCache?: any[]) => {
     buffers.push(chunk);
   }
   const data = Buffer.concat(buffers)
-
+  
   const type = req.headers["content-type"]
-
+  
   if (type === "application/json") {
     return JSON.parse(data.toString())
   }
-
-  const arr = new Uint16Array(data)
-  const buffersCount = arr[0]
+  
+  const buffersCount = data.readUint32LE(0)
   const innerBuffers: Buffer[] = []
 
-  let index = (1+buffersCount)
+  let index = (1+buffersCount)*INT_SIZE
   for (let i = 0; i < buffersCount; i++) {
-    innerBuffers.push(data.subarray(index, index+arr[i+1]))
-    index += arr[i+1]
+    const length = data.readUint32LE((i + 1)*INT_SIZE)
+    innerBuffers.push(data.subarray(index, index+length))
+    index += length
   }
-
   
   const json = JSON.parse(innerBuffers[0].toString())
   return inverseObj(json, innerBuffers.slice(1), methodsCache)
@@ -68,12 +69,12 @@ export const writeBody = (reply: ClientRequest | ServerResponse, obj: any, metho
   }
   
   buffers.unshift(jsonPayload)
-  const controls = new Uint16Array((buffers.length+1))
+  const controls = new Uint32Array((buffers.length+1))
   controls[0] = buffers.length
   for (let i = 0; i < buffers.length; i++) {
     controls[i+1] = buffers[i].byteLength
   }
-  buffers.unshift(Buffer.from(controls))
+  buffers.unshift(Buffer.from(controls.buffer))
   const response = Buffer.concat(buffers)
 
   if ("writeHead" in reply) {
