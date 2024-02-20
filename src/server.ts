@@ -1,6 +1,7 @@
 import { createServer as createHttpServer } from 'http'
-import { parseBody, writeBody, writeBodyAsJson } from './utils/getBody'
+import { parseBody, writeBody } from './utils/getBody'
 import { uid } from './utils/uid'
+import { Transform } from 'stream'
 
 type AddMethodOptions = {
   delay?: number
@@ -16,6 +17,7 @@ type LinkMeUpObject = {
   _linkmeup_id: string, 
   _linkmeup_status: "process" | "error" | "complete", 
   _linkmeup_methodCalls: any[],
+  _linkmeup_streams: string[],
   _linkmeup_error?: string,
   _linkmeup_result?: any
 }
@@ -28,6 +30,7 @@ export const createServer = () => {
   const events = new Map<string, Event>()
 
   const methodsCacheMap = new Map<string, LinkMeUpObject>()
+  const streamsMap = new Map<string, Transform>()
 
   const server = createHttpServer(async (req, res) => {
     if (!req.url || req.url === "/") {
@@ -41,10 +44,23 @@ export const createServer = () => {
     if (req.url.startsWith("/_linkmeup_status")) {
       const requestId = req.url.slice("/_linkmeup_status/".length)
       const cacheObj = methodsCacheMap.get(requestId)
-      if (!cacheObj) return
+      if (!cacheObj) {
+        return res.setHeader("content-type", "text/plain").writeHead(404).end("Endpoint not found")
+      }
 
       writeBody(res, cacheObj)
       cacheObj._linkmeup_methodCalls.length = 0
+      return
+    }
+
+    if (req.url.startsWith("/_linkmeup_streams")) {
+      const streamId = req.url.slice("/_linkmeup_streams/".length)
+      const stream = streamsMap.get(streamId)
+      if (!stream) {
+        return res.setHeader("content-type", "text/plain").writeHead(404).end("Stream not found")
+      }
+
+      req.pipe(stream)
       return
     }
 
@@ -81,10 +97,18 @@ export const createServer = () => {
       const cacheObj: LinkMeUpObject = { 
         _linkmeup_id: processId,
         _linkmeup_status: "process", 
-        _linkmeup_methodCalls: []
+        _linkmeup_methodCalls: [],
+        _linkmeup_streams: []
       }
+      const streams: Transform[] = []
       methodsCacheMap.set(processId, cacheObj)
-      const body = await parseBody(req, cacheObj._linkmeup_methodCalls)
+      const body = await parseBody(req, streams, cacheObj._linkmeup_methodCalls)
+
+      for (let stream of streams) {
+        const id = uid()
+        streamsMap.set(id, stream)
+        cacheObj._linkmeup_streams.push(id)
+      }
 
       activeJobs++
       event.event(...body.args)

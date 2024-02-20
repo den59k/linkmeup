@@ -13,6 +13,7 @@ vi.mock("http", async () => {
 
 import { createServer } from '../src/server'
 import { createClient } from '../src/client';
+import { PassThrough, Readable, Stream } from 'stream';
 
 it("test connection", async () => {
   const server = createServer()
@@ -94,4 +95,54 @@ it("test error long method", async () => {
   const client = createClient("http://127.0.0.1:8000")
   expect(await client.sqrt(4)).toBe(2)
   await expect(() => client.sqrt(-5)).rejects.toThrowError("Number cant be less a zero")
+})
+
+it("test stream with server", async () => {
+
+  const server = createServer()
+  server.addLongMethod("toString", async (a: Readable) => {
+    let output = ""
+    for await (const chunk of a) {
+      output += chunk.toString()
+    }
+    return output
+  })
+  await server.listen(8000, "127.0.0.1")
+
+  const client = createClient("http://127.0.0.1:8000")
+  const stream = new PassThrough()
+
+  const promise = client.toString(stream)
+
+  stream.write(Buffer.from("test"))
+  stream.end()
+
+  const resp = await promise
+  expect(resp).toBe("test")
+})
+
+it("test stream", async () => {
+
+  const stream = new PassThrough()
+  const readable = new PassThrough()
+    
+  let resp = ""
+  readable.on("data", (chunk: Buffer) => {
+    resp += chunk.toString("utf-8")
+  })
+
+  stream.pipe(readable)
+  stream.write("test")
+  stream.end()
+
+  expect(resp).toBe("test")
+
+  // const server = createServer()
+  // server.addLongMethod("size", async (a: number) => {
+  //   if (a < 0) {
+  //     throw new Error("Number cant be less a zero")
+  //   }
+  //   return Math.sqrt(a)
+  // })
+
 })

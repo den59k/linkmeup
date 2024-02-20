@@ -1,9 +1,10 @@
 import { ClientRequest, IncomingMessage, ServerResponse } from "http";
 import { mapObject } from "./mapObject";
+import { PassThrough, Readable, Stream, Transform, Writable } from "stream";
 
 const INT_SIZE = 4
 
-export const parseBody = async (req: IncomingMessage, methodsCache?: any[]) => {
+export const parseBody = async (req: IncomingMessage, streams?: Transform[], methodsCache?: any[]) => {
 
   const buffers: Buffer[] = [];
   for await (const chunk of req) {
@@ -26,16 +27,22 @@ export const parseBody = async (req: IncomingMessage, methodsCache?: any[]) => {
     innerBuffers.push(data.subarray(index, index+length))
     index += length
   }
-  
+
   const json = JSON.parse(innerBuffers[0].toString())
-  return inverseObj(json, innerBuffers.slice(1), methodsCache)
+  return inverseObj(json, innerBuffers.slice(1), streams, methodsCache)
 }
 
-export const inverseObj = (obj: any, buffers: Buffer[], methodsCache?: any[]) => {
+export const inverseObj = (obj: any, buffers: Buffer[], streams?: Transform[], methodsCache?: any[]) => {
   return mapObject(obj, (item) => {
     if (typeof item !== 'object' || item === null || !("_linkmeup_type" in item)) return
     if (item["_linkmeup_type"] === "buffer") {
       return buffers[item['index']]
+    }
+
+    if (item["_linkmeup_type"] === "stream" && streams) {
+      const passthrough = new PassThrough()
+      streams.push(passthrough)
+      return passthrough
     }
 
     if (item["_linkmeup_type"] === "function" && methodsCache) {
@@ -52,13 +59,13 @@ export const writeBodyAsJson = (obj: any) => {
   return Buffer.from(JSON.stringify(obj))
 }
 
-export const writeBody = (reply: ClientRequest | ServerResponse, obj: any, methods?: Function[]) => {
+export const writeBody = (reply: ClientRequest | ServerResponse, obj: any, streams?: Readable[], methods?: Function[]) => {
 
   const buffers: Buffer[] = []
-  traverseObj(obj, buffers, methods)
+  traverseObj(obj, buffers, streams, methods)
   const jsonPayload = Buffer.from(JSON.stringify(obj))
 
-  if (buffers.length === 0) {
+  if (buffers.length === 0 && (!streams || streams.length === 0)) {
     reply.setHeader("content-type", "application/json")
     reply.setHeader("content-length", jsonPayload.byteLength)
     if ("writeHead" in reply) {
@@ -85,8 +92,12 @@ export const writeBody = (reply: ClientRequest | ServerResponse, obj: any, metho
   reply.end(response)
 }
 
-export const traverseObj = (obj: any, buffers: Buffer[], methods?: Function[]) => {
+export const traverseObj = (obj: any, buffers: Buffer[], streams?: Readable[], methods?: Function[]) => {
   return mapObject(obj, (item) => {
+    if (item instanceof Stream && streams) {
+      streams.push(item as Readable)
+      return { _linkmeup_type: "stream", index: streams.length - 1 }
+    }
     if (Buffer.isBuffer(item)) {
       buffers.push(item)
       return { _linkmeup_type: "buffer", index: buffers.length - 1 }

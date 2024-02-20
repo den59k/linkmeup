@@ -1,6 +1,7 @@
 import { request as httpsRequest } from 'https'
-import { IncomingMessage, request as httpRequest, get } from 'http'
+import { IncomingMessage, request as httpRequest, ClientRequest } from 'http'
 import { parseBody, writeBody } from './utils/getBody'
+import { Readable } from 'stream'
 
 const delay = 200
 
@@ -22,6 +23,9 @@ export const createPeer = (url: string, debug?: boolean) => {
     const payload = { args }
     const methods: Function[] = []
 
+    const streams: Readable[] = []
+    const streamRequests: ClientRequest[] = []
+    
     const onResponse = async (reply: IncomingMessage) => {
       if (reply.statusCode !== 200) {
         const body = await parseBody(reply)
@@ -29,6 +33,18 @@ export const createPeer = (url: string, debug?: boolean) => {
       }
 
       const body = await parseBody(reply)
+      
+      if ("_linkmeup_streams" in body) {
+        for (let i = 0; i < body._linkmeup_streams.length; i++) {
+          if (streamRequests[i] || !streams[i]) continue
+
+          const streamId = body._linkmeup_streams[i]
+          const newRequest = request(`${url}/_linkmeup_streams/${streamId}`, { method: "POST" })
+          streamRequests[i] = newRequest
+          
+          streams[i].pipe(newRequest)
+        }
+      }
 
       if ("_linkmeup_methodCalls" in body) {
         for (let i = 0; i < body._linkmeup_methodCalls.length; i++) {
@@ -56,7 +72,7 @@ export const createPeer = (url: string, debug?: boolean) => {
 
     const clientRequest = request(`${url}/${methodName}`, { method: "POST" }, onResponse)
     clientRequest.on("error", rej)
-    writeBody(clientRequest, payload, methods)
+    writeBody(clientRequest, payload, streams, methods)
   })
 
   const setStatus = (newStatus: string) => {
