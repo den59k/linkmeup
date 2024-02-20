@@ -3,7 +3,7 @@ import { IncomingMessage, request as httpRequest, ClientRequest } from 'http'
 import { parseBody, writeBody } from './utils/getBody'
 import { Readable } from 'stream'
 
-const delay = 200
+const DEFAULT_DELAY = 500
 
 export class LinkMeUpError extends Error {
   constructor(message?: string) {
@@ -11,11 +11,17 @@ export class LinkMeUpError extends Error {
   }
 }
 
-export const createPeer = (url: string, debug?: boolean) => {
+type CreateClientOptions = {
+  debug?: boolean,
+  delay?: number
+}
+
+export const createPeer = (url: string, options: CreateClientOptions) => {
 
   let value = 0
   let status = "init"
 
+  const delay = options.delay ?? DEFAULT_DELAY
   const request = url.startsWith("https")? httpsRequest: httpRequest
   
   const callMethod = (methodName: string, args: any[]) => new Promise<void>((res, rej) => {
@@ -76,7 +82,7 @@ export const createPeer = (url: string, debug?: boolean) => {
   })
 
   const setStatus = (newStatus: string) => {
-    if (debug && status !== newStatus) {
+    if (options.debug && status !== newStatus) {
       console.info(`Peer ${url} ${newStatus}`)
     }
     status = newStatus
@@ -105,15 +111,11 @@ export const createPeer = (url: string, debug?: boolean) => {
   }
 }
 
-type CreateClientOptions = {
-  debug?: boolean
-}
-
 export const createClient = (url: string | string[], options: CreateClientOptions = {}) => {
 
   const urls = Array.isArray(url)? url: [ url ]
 
-  const peers = urls.map(url => createPeer(url, options.debug))
+  const peers = urls.map(url => createPeer(url, options))
 
   const getActivePeer = async () => {
     let activePeers = peers.filter(item => item.getStatus() === "ready")

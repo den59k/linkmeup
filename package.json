@@ -15,8 +15,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc && vite build",
-    "dev:server": "vite-node --mode development dev/server.ts",
-    "dev:client": "vite-node --mode development dev/client.ts",
+    "dev:server": "vite-node --mode development dev/stream.ts",
     "test": "vitest"
   },
   "devDependencies": {
