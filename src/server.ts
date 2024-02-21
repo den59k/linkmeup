@@ -18,6 +18,8 @@ type LinkMeUpObject = {
   _linkmeup_status: "process" | "error" | "complete", 
   _linkmeup_methodCalls: any[],
   _linkmeup_streams: string[],
+  _linkmeup_startTime: number,
+  _linkmeup_endTime?: number,
   _linkmeup_error?: string,
   _linkmeup_result?: any
 }
@@ -98,7 +100,8 @@ export const createServer = () => {
         _linkmeup_id: processId,
         _linkmeup_status: "process", 
         _linkmeup_methodCalls: [],
-        _linkmeup_streams: []
+        _linkmeup_streams: [],
+        _linkmeup_startTime: Date.now()
       }
       const streams: Transform[] = []
       methodsCacheMap.set(processId, cacheObj)
@@ -115,11 +118,13 @@ export const createServer = () => {
         .then((resp) => {
           cacheObj._linkmeup_result = resp
           cacheObj._linkmeup_status = "complete"
+          cacheObj._linkmeup_endTime = Date.now()
         })
         .catch((err) => {
           // console.warn(err)
           cacheObj._linkmeup_status = "error"
           cacheObj._linkmeup_error = err.message
+          cacheObj._linkmeup_endTime = Date.now()
         })
         .finally(() => {
           activeJobs--
@@ -128,6 +133,43 @@ export const createServer = () => {
       writeBody(res, cacheObj)
     }
   })
+
+  const closeStream = (streamId: string) => {
+    const stream = streamsMap.get(streamId)
+    if (!stream) return
+    if (!stream.closed) {
+      stream.destroy()
+    }
+    streamsMap.delete(streamId)
+    // console.info(`Remove stream ${streamId}`)
+  }
+  
+  const checkActiveJobsInterval = setInterval(() => {
+    if (methodsCacheMap.size === 0) return
+
+    const disposeTime = Date.now() + 10 * 1000
+    const closeByTimeoutTime = Date.now() + 30 * 60 * 1000
+
+    const toRemove = []
+    for (let job of methodsCacheMap.values()) {
+      if (job._linkmeup_endTime !== undefined && disposeTime > job._linkmeup_endTime) {
+        toRemove.push(job._linkmeup_id)
+        for (let streamId of job._linkmeup_streams) {
+          closeStream(streamId)
+        }
+      }
+      if (closeByTimeoutTime > job._linkmeup_startTime && job._linkmeup_endTime === undefined) {
+        job._linkmeup_endTime = Date.now()
+        job._linkmeup_error = "Job Timeout"
+        job._linkmeup_status = "error"
+      }
+    }
+
+    for (let id of toRemove) {
+      // console.info(`Remove job ${id}`)
+      methodsCacheMap.delete(id)
+    }
+  }, 5000)
 
   const listen = async (port: number, hostname: string) => {
     await new Promise<void>(res => server.listen(port, hostname, res))
@@ -141,9 +183,16 @@ export const createServer = () => {
     events.set(channel, { event, options, type: "long" })
   }
 
+  const dispose = () => {
+    clearInterval(checkActiveJobsInterval)
+    server.closeAllConnections()
+    server.close()
+  }
+
   return {
     addMethod,
     addLongMethod,
-    listen
+    listen,
+    dispose
   }
 }
