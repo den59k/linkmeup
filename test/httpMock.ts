@@ -45,7 +45,7 @@ export const mockRequest = (url: string, options: http.RequestOptions, callback:
   
   reply.writeHead = (statusCode: number, headers: any) => {
     replyMessage.statusCode = statusCode
-    callback(reply as unknown as IncomingMessage)
+    callback?.(reply as unknown as IncomingMessage)
     return reply
   }
   reply.setHeader = (header, value) => {

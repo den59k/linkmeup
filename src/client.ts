@@ -42,6 +42,11 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
       //   stream.destroy()
       // }
     }
+
+    const reject = (error: Error) => {
+      dispose()
+      rej(error)
+    }
     
     const onResponse = async (reply: IncomingMessage) => {
       if (reply.statusCode !== 200) {
@@ -76,8 +81,7 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
       }
       
       if (body._linkmeup_status === "error") {
-        dispose()
-        return rej(new LinkMeUpError(body._linkmeup_error ?? "Error on method invoke"))
+        return reject(new LinkMeUpError(body._linkmeup_error ?? "Error on method invoke"))
       }
 
       if (body._linkmeup_status === "complete") {
@@ -88,13 +92,13 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
       const requestId = body["_linkmeup_id"]
       setTimeout(() => {
         const newRequest = request(`${url}/_linkmeup_status/${requestId}`, { method: "GET" }, onResponse)
-        newRequest.on("error", rej)
+        newRequest.on("error", reject)
         newRequest.end()
       }, delay)
     }
 
     const clientRequest = request(`${url}/${methodName}`, { method: "POST" }, onResponse)
-    clientRequest.on("error", rej)
+    clientRequest.on("error", reject)
     writeBody(clientRequest, payload, streams, methods)
   })
 

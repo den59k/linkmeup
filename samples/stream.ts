@@ -28,8 +28,8 @@ const init = async () => {
   console.log(resp2)
   console.log(`Execution time: ${Date.now() - time}ms`)
 
-  // await new Promise(res => setTimeout(res, 1000))
-  // server.dispose()
+  await new Promise(res => setTimeout(res, 1000))
+  server.dispose()
 }
 
 init()

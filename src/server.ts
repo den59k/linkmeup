@@ -36,7 +36,7 @@ export const createServer = () => {
 
   const server = createHttpServer(async (req, res) => {
     if (!req.url || req.url === "/") {
-      await new Promise<void>(res => setTimeout(res, 20))
+      await new Promise<void>(res => setTimeout(res, 40))
       return res
         .setHeader("content-type", "application/json")
         .writeHead(200)
