@@ -63,6 +63,9 @@ export const createServer = () => {
       }
 
       req.pipe(stream)
+      req.once("end", () => {
+        res.setHeader("content-type", "application/json").writeHead(200).end(JSON.stringify({ status: "complete", streamId: streamId }))
+      })
       return
     }
 

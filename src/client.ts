@@ -31,6 +31,17 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
 
     const streams: Readable[] = []
     const streamRequests: ClientRequest[] = []
+
+    const dispose = () => {
+      for (let streamRequest of streamRequests) {
+        if (streamRequest.closed) continue
+        streamRequest.destroy()
+      }
+      // for (let stream of streams) {
+      //   if (stream.closed) continue
+      //   stream.destroy()
+      // }
+    }
     
     const onResponse = async (reply: IncomingMessage) => {
       if (reply.statusCode !== 200) {
@@ -65,14 +76,12 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
       }
       
       if (body._linkmeup_status === "error") {
-        for (let stream of streams) {
-          if (stream.closed) continue
-          stream.destroy()
-        }
+        dispose()
         return rej(new LinkMeUpError(body._linkmeup_error ?? "Error on method invoke"))
       }
 
       if (body._linkmeup_status === "complete") {
+        dispose()
         return res(body._linkmeup_result)
       }
       
