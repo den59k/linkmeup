@@ -46,8 +46,12 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
 
           const streamId = body._linkmeup_streams[i]
           const newRequest = request(`${url}/_linkmeup_streams/${streamId}`, { method: "POST" })
+          newRequest.on("error", () => {
+            if (options.debug) {
+              console.warn(`Stream ${streamId} was unexpectedly closed`)
+            }
+          })
           streamRequests[i] = newRequest
-          
           streams[i].pipe(newRequest)
         }
       }
@@ -61,6 +65,10 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
       }
       
       if (body._linkmeup_status === "error") {
+        for (let stream of streams) {
+          if (stream.closed) continue
+          stream.destroy()
+        }
         return rej(new LinkMeUpError(body._linkmeup_error ?? "Error on method invoke"))
       }
 

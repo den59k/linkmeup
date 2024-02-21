@@ -147,8 +147,8 @@ export const createServer = () => {
   const checkActiveJobsInterval = setInterval(() => {
     if (methodsCacheMap.size === 0) return
 
-    const disposeTime = Date.now() + 10 * 1000
-    const closeByTimeoutTime = Date.now() + 30 * 60 * 1000
+    const disposeTime = Date.now() - 10 * 1000
+    const closeByTimeoutTime = Date.now() - 30 * 60 * 1000
 
     const toRemove = []
     for (let job of methodsCacheMap.values()) {
