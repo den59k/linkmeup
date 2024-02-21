@@ -39,32 +39,6 @@ server.addMethod("processImage", async (image: Buffer) => {
 server.listen(7800, 'localhost')
 ```
 
-Next here should be a command that generates d.ts files based on the code, but I haven't finished with it yet. See file `src/analize.ts`
-
-The d.ts files must look like
-
-```ts
-interface Client1 {
-  processImage: (image: Buffer) => Promise<Buffer>,
-}
-
-declare module 'linkmeup' {
-  interface Clients {
-    client1: Client1
-  }
-}
-export {}
-```
-
-Then we go to the root project and copy the generated `d.ts` files anywhere in the project
-
-Note: If you use a `ts-node`, you will probably need to add this section to your `tsconfig.json`:
-```tson
-"ts-node": {
-  "files": true
-},
-```
-
 That's it, now all that's left is to connect to our server:
 
 ```ts
