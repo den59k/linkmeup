@@ -10,7 +10,6 @@ vi.mock("http", async () => {
   }
 })
 
-
 import { createServer } from '../src/server'
 import { createClient } from '../src/client';
 import { PassThrough, Readable, Stream } from 'stream';

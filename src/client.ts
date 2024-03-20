@@ -4,6 +4,7 @@ import { parseBody, writeBody } from './utils/getBody'
 import { Readable } from 'stream'
 
 const DEFAULT_DELAY = 500
+const DEFAULT_PING_INTERVAL = 5000
 
 export class LinkMeUpError extends Error {
   constructor(message?: string) {
@@ -13,13 +14,15 @@ export class LinkMeUpError extends Error {
 
 type CreateClientOptions = {
   debug?: boolean,
-  delay?: number
+  delay?: number,
+  pingInterval?: number
 }
 
 export const createPeer = (url: string, options: CreateClientOptions) => {
 
   let value = 0
   let status = "init"
+  let lastActivity = 0
 
   const delay = options.delay ?? DEFAULT_DELAY
   const request = url.startsWith("https")? httpsRequest: httpRequest
@@ -113,6 +116,7 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
     const onResponse = async (msg: IncomingMessage) => {
       const body = await parseBody(msg)
       setStatus("ready")
+      lastActivity = Date.now()
       value = body.value
     }
     const onReject = (err: any) => {
@@ -162,7 +166,7 @@ export const createClient = (url: string | string[], options: CreateClientOption
     }
   }
   ping()
-  setInterval(ping, 5000)
+  setInterval(ping, options.pingInterval ?? DEFAULT_PING_INTERVAL)
 
   return new Proxy({}, {
     get(target, name: string) {

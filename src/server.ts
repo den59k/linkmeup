@@ -24,9 +24,13 @@ type LinkMeUpObject = {
   _linkmeup_result?: any
 }
 
-export const createServer = () => {
+type CreateServerOptions = {
+  value?: number
+}
+
+export const createServer = (options: CreateServerOptions = {}) => {
   
-  const maxValue = 10
+  const maxValue = options.value ?? 10
   let activeJobs = 0
 
   const events = new Map<string, Event>()
