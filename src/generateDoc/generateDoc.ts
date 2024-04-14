@@ -106,7 +106,7 @@ export const generateDoc = (files: ts.SourceFile | ts.SourceFile[], typeChecker:
           if (type.symbol) {
             addOutputImport(type.symbol.escapedName!)
           } else if (type.aliasSymbol) {
-            console.log(type.aliasSymbol.escapedName, reverseImports.has(type.aliasSymbol.escapedName!))
+            console.info("Alias Symbol", type.aliasSymbol.escapedName, reverseImports.has(type.aliasSymbol.escapedName!))
           }
           
           // console.log(type)

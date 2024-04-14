@@ -108,10 +108,10 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
 
   const setStatus = (newStatus: string) => {
     if (status === newStatus) return
+    status = newStatus
     if (options.onChangeStatus) {
       options.onChangeStatus(url, newStatus)
     }
-    status = newStatus
   }
 
   const ping = async (debug = false) => {
