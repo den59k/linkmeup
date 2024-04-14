@@ -2,7 +2,13 @@ import { createClient } from "../src/client";
 import { createServer } from "../src/server";
 import fs from 'fs'
 
-const server = createServer()
+const server = createServer("testServer")
+
+declare interface LinkMeUpClients {
+  testServer: {
+    fileSize: (file: Buffer) => Promise<number>
+  }
+}
 
 server.addMethod("sum", async (a: number, b: number) => {
   return a + b 
@@ -14,7 +20,7 @@ server.addLongMethod("fileSize", async (image: Buffer) => {
 
 server.listen(3000, "0.0.0.0").then(() => console.log("Server listen!"))
 
-const client = createClient("http://192.168.0.11:3000", { debug: true, delay: 50 })
+const client = createClient<LinkMeUpClients, "testServer">("testServer", "http://192.168.0.11:3000", { debug: true, delay: 50 })
 
 const init = async () => {
 

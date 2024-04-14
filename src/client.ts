@@ -136,7 +136,11 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
   }
 }
 
-export const createClient = (url: string | string[], options: CreateClientOptions = {}) => {
+export interface LinkMeUpClients {
+
+}
+
+export const createClient = <K extends LinkMeUpClients, T extends keyof K>(name: T, url: string | string[], options: CreateClientOptions = {}) => {
 
   const urls = Array.isArray(url)? url: [ url ]
 
@@ -172,5 +176,5 @@ export const createClient = (url: string | string[], options: CreateClientOption
     get(target, name: string) {
       return (...args: any) => callMethod(name, args)
     }
-  }) as any
+  }) as K[T]
 }

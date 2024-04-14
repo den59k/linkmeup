@@ -1,9 +1,15 @@
-import { Readable } from "stream"
+import { Readable, Stream } from "stream"
 import { createServer } from "../src/server"
 import { createClient } from "../src/client"
 import fs from 'fs'
 
-const server = createServer()
+const server = createServer("testServer")
+
+declare interface LinkMeUpClients {
+  testServer: {
+    fileSize: (file: Stream) => Promise<number>
+  }
+}
 
 server.addLongMethod("fileSize", async (image: Readable) => {
   const chunks: Buffer[] = []
@@ -18,7 +24,7 @@ server.addLongMethod("fileSize", async (image: Readable) => {
 
 server.listen(3000, "0.0.0.0").then(() => console.log("Server listen!"))
 
-const client = createClient("http://192.168.0.11:3000", { debug: true, delay: 50 })
+const client = createClient<LinkMeUpClients, "testServer">("testServer", "http://192.168.0.11:3000", { debug: true, delay: 50 })
 
 const init = async () => {
 

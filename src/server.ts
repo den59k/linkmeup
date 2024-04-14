@@ -28,7 +28,7 @@ type CreateServerOptions = {
   value?: number
 }
 
-export const createServer = (options: CreateServerOptions = {}) => {
+export const createServer = <T extends string>(name: T, options: CreateServerOptions = {}) => {
   
   const maxValue = options.value ?? 10
   let activeJobs = 0
@@ -200,6 +200,7 @@ export const createServer = (options: CreateServerOptions = {}) => {
     addMethod,
     addLongMethod,
     listen,
-    dispose
+    dispose,
+    name
   }
 }

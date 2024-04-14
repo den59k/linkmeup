@@ -15,34 +15,34 @@ import { createClient } from '../src/client';
 import { PassThrough, Readable, Stream } from 'stream';
 
 it("test connection", async () => {
-  const server = createServer()
+  const server = createServer("testServer", )
 
   server.addMethod("sum", async (a: number, b: number) => {
     return a + b
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
   const resp = await client.sum(1, 2)
   expect(resp).toBe(3)
 })
 
 it("test send buffer as argument", async () => {
-  const server = createServer()
+  const server = createServer("testServer", )
 
   server.addMethod("concat", async (a: Buffer, b: Buffer) => {
     return Buffer.concat([ a, b ])
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
 
   const resp = await client.concat(Buffer.from("Hello, "), Buffer.from("world!"))
   expect((resp as Buffer).toString()).toBe("Hello, world!")
 })
 
 it("test long method", async () => {
-  const server = createServer()
+  const server = createServer("testServer", )
 
   server.addLongMethod("convert", async (a: Buffer, b: Buffer, onProgress: (progress: number) => void) => {
     for (let i = 0; i <= 100; i+= 10) {
@@ -53,7 +53,7 @@ it("test long method", async () => {
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
 
   let _progress = 0
   const resp = await client.convert(Buffer.from("Hello, "), Buffer.from("world!"), (progress: number) => {
@@ -65,7 +65,7 @@ it("test long method", async () => {
 
 it("test error method", async () => {
 
-  const server = createServer()
+  const server = createServer("testServer", )
   server.addMethod("sqrt", async (a: number) => {
     if (a < 0) {
       throw new Error("Number cant be less a zero")
@@ -74,7 +74,7 @@ it("test error method", async () => {
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
 
   expect(await client.sqrt(4)).toBe(2)
   await expect(() => client.sqrt(-5)).rejects.toThrowError("Number cant be less a zero")
@@ -82,7 +82,7 @@ it("test error method", async () => {
 
 it("test error long method", async () => {
 
-  const server = createServer()
+  const server = createServer("testServer", )
   server.addLongMethod("sqrt", async (a: number) => {
     if (a < 0) {
       throw new Error("Number cant be less a zero")
@@ -91,14 +91,14 @@ it("test error long method", async () => {
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
   expect(await client.sqrt(4)).toBe(2)
   await expect(() => client.sqrt(-5)).rejects.toThrowError("Number cant be less a zero")
 })
 
 it("test stream with server", async () => {
 
-  const server = createServer()
+  const server = createServer("testServer", )
   server.addLongMethod("toString", async (a: Readable) => {
     let output = ""
     for await (const chunk of a) {
@@ -108,7 +108,7 @@ it("test stream with server", async () => {
   })
   await server.listen(8000, "127.0.0.1")
 
-  const client = createClient("http://127.0.0.1:8000", { delay: 20 })
+  const client = createClient("testServer", "http://127.0.0.1:8000", { delay: 20 })
   const stream = new PassThrough()
 
   const promise = client.toString(stream)

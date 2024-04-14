@@ -43,10 +43,12 @@ export default defineConfig(config => ({
     minify: false,
     sourcemap: true,
     lib: {
-      entry:  "src/index.ts",
+      entry:  {
+        "index": "src/index.ts",
+        "bin": "src/bin.ts"
+      },
       formats: [ "cjs" ],
-      fileName: "index",
-      name: "main"
+      fileName: "[name]"
     },
     rollupOptions: {
       external: [

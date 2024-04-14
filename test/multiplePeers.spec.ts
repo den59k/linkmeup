@@ -14,8 +14,8 @@ vi.mock("http", async () => {
 
 it("connect to multiple peers", async () => {
 
-  const server = createServer({ value: 10 })
-  const server2 = createServer({ value: 12 })   // The higher the value, the more load the server can handle
+  const server = createServer("testServer", { value: 10 })
+  const server2 = createServer("testServer", { value: 12 })   // The higher the value, the more load the server can handle
 
   server.addLongMethod("getClientIdx", async () => {
     await new Promise(res => setTimeout(res, 50))
@@ -29,7 +29,7 @@ it("connect to multiple peers", async () => {
   server.listen(3001, "127.0.0.1")
   server2.listen(3002, "127.0.0.1")
 
-  const client = createClient(["http://127.0.0.1:3001", "http://127.0.0.1:3002"], { delay: 20, pingInterval: 2 })
+  const client = createClient("testServer", ["http://127.0.0.1:3001", "http://127.0.0.1:3002"], { delay: 20, pingInterval: 2 })
 
   expect(await client.getClientIdx()).toBe(2)
 
