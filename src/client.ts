@@ -15,7 +15,8 @@ export class LinkMeUpError extends Error {
 type CreateClientOptions = {
   debug?: boolean,
   delay?: number,
-  pingInterval?: number
+  pingInterval?: number,
+  onChangeStatus?: (url: string, status: string) => void
 }
 
 export const createPeer = (url: string, options: CreateClientOptions) => {
@@ -106,8 +107,9 @@ export const createPeer = (url: string, options: CreateClientOptions) => {
   })
 
   const setStatus = (newStatus: string) => {
-    if (options.debug && status !== newStatus) {
-      console.info(`Peer ${url} ${newStatus}`)
+    if (status === newStatus) return
+    if (options.onChangeStatus) {
+      options.onChangeStatus(url, newStatus)
     }
     status = newStatus
   }
@@ -144,7 +146,14 @@ export const createClient = <K extends LinkMeUpClients, T extends keyof K>(name:
 
   const urls = Array.isArray(url)? url: [ url ]
 
-  const peers = urls.map(url => createPeer(url, options))
+  const onChangeStatus = (url: string, newStatus: string) => {
+    if (options.debug) {
+      const activePeers = peers.filter(item => item.getStatus() === 'ready').length
+      console.info(`[${name as string}] Peer ${url} ${newStatus}. Active peers: ${activePeers}`)
+    }
+  }
+
+  const peers = urls.map(url => createPeer(url, { ...options, onChangeStatus }))
 
   const getActivePeer = async () => {
     let activePeers = peers.filter(item => item.getStatus() === "ready")

@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
+import pkg from './package.json'
 
 const nodeExternal = [
   "assert",
@@ -53,6 +54,7 @@ export default defineConfig(config => ({
     rollupOptions: {
       external: [
         /^node:/,
+        ...Object.keys(pkg.devDependencies),
         ...nodeExternal
       ],
     }
